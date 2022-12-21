@@ -1,6 +1,7 @@
 import base64
 import os
 import re
+import secrets
 
 import bcrypt
 import onetimepass
@@ -98,7 +99,9 @@ class UserInfo(Base):
         passing self.password back to bcrypt.hashpw(...) as a salt, it is smart
         enough to extract and use only the salt that was originally used.
         """
-        return self.password == bcrypt.hashpw(password.encode(), self.password)
+        return secrets.compare_digest(
+            self.password, bcrypt.hashpw(password.encode(), self.password)
+        )
 
     @validates("email")
     def validate_email(self, key, address):
@@ -107,8 +110,11 @@ class UserInfo(Base):
         """
         if not address:
             return
-        assert re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", address)
-        return address
+        # assert re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", address)
+        if re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", address):
+            return address
+        else:
+            return
 
     def is_valid_token(self, token):
         """
